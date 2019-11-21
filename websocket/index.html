@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+	<head>
+    	<!-- Required meta tags -->
+   		<meta charset="utf-8">
+    	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<title>websockets</title>
+		<script>
+            window.onload = function () {
+                var conn;
+                var content = document.getElementById("content");
+                var msg = document.getElementById("msg")
+     
+                document.getElementById("form").onsubmit = function () {
+                    if (!conn) {
+                        return false;
+                    }
+                    if (!msg.value) {
+                        return false;
+                    }
+                    console.log(msg.value)
+                    conn.send(JSON.stringify({Method: "action", Body: msg.value}));
+                    msg.value = "";
+                    return false;
+                };
+
+                if (window["WebSocket"]) {
+                    conn = new WebSocket("ws://localhost:8080/ws/register");
+                   
+                    conn.onclose = function (evt) {
+                        var item = document.createElement("div");
+                        item.innerHTML = "<b>Connection closed.</b>";
+                        content.appendChild(item);
+                    };
+                    conn.onmessage = function (evt) {                        
+                        var item = document.createElement("div");
+                        item.innerText = evt.data
+                        content.appendChild(item)
+                    };
+                    conn.onopen = function() {
+                        conn.send(JSON.stringify({Method: "helo"}))
+                    };
+                } else {
+                    var item = document.createElement("div");
+                    item.innerHTML = "<b>Your browser does not support WebSockets.</b>";
+                    content.appendChild(item);
+                }
+        };
+		</script>
+	</head>
+	<body>
+    
+    <a href="/hello">Say Hello!</a>
+    <form id="form">
+        <input type="text" id="msg"><input type="submit">
+    </form>
+	<div id="content" >
+	</div>
+	
+	</body>
+</html>
