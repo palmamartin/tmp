@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "dependencies": {
+    "@hotwired/stimulus": "^3.0.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.14.42"
+  },
+  "scripts": {
+    "build": "esbuild src/main.js --bundle --minify --sourcemap --outfile=public/main.js"
+  }
+}
