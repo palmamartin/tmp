@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-    static targets = ["name"];
+    static targets = ["name"]
 
     greet() {
         console.log("you clicked ", this.name)
@@ -10,6 +10,7 @@ export default class extends Controller {
     get name() {
         return this.nameTarget.value
     }
+
     connect() {
         console.log("hello", this.element)
     }
