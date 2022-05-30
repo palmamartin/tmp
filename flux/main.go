@@ -28,18 +28,35 @@ func main() {
 	queryAPI := client.QueryAPI("")
 
 	const flux = `
-from(bucket:"lter")
-	|>range(start: -4h)
+t1 = from(bucket:"lter_new")
+	|>range(start: 2022-04-03T23:00:00Z, stop: 2022-04-04T02:00:00Z)
 	|>filter(fn: (r) => 
 		r._measurement == "air_t_avg" and
 		r._field == "air_t_avg" and
 		r.snipeit_location_ref == "34" 
-		
 	)
+	|> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+	|> drop(columns: ["_start", "_stop", "_measurement", "aggr", "landuse", "snipeit_location_ref", "unit"])
+	|> group(columns: ["_measurement"])
+	|> sort(columns: ["_time"])
+
+t2 = from(bucket:"lter_new")
+	|>range(start: 2022-04-03T23:00:00Z, stop: 2022-04-04T02:00:00Z)
+	|>filter(fn: (r) => 
+		r._measurement == "air_t_avg" and
+		r._field == "air_t_avg" and
+		r.snipeit_location_ref == "4" 
+	)
+	|> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+	|> drop(columns: ["_start", "_stop", "_measurement", "aggr", "landuse", "snipeit_location_ref", "unit"])
+	|> group(columns: ["_measurement"])
+	|> sort(columns: ["_time"])
+
+join(tables: {air_t_avg: t1, wind_dir: t2}, on: ["_time"])
 	`
 
 	d := influxdb2.DefaultDialect()
-	d.DateTimeFormat = &DefaultTimeFormat
+	//d.DateTimeFormat = &DefaultTimeFormat
 
 	// dt := &domain.Dialect{
 	// 	DateTimeFormat: &DefaultTimeFormat,
