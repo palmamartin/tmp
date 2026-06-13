@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Install the latest Node.js 24.x, pnpm and tailscale
+
+if [[ "$(id -u)" -eq 0 ]]; then
+  SUDO=""
+elif command -v sudo >/dev/null 2>&1; then
+  SUDO="sudo"
+else
+  echo "This script needs root privileges or sudo." >&2
+  exit 1
+fi
+
+export DEBIAN_FRONTEND=noninteractive
+
+${SUDO} apt-get update
+${SUDO} apt-get install -y ca-certificates curl gnupg
+
+${SUDO} install -d -m 0755 /etc/apt/keyrings
+${SUDO} rm -f /etc/apt/keyrings/nodesource.gpg
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+  | ${SUDO} gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+
+${SUDO} rm -f /etc/apt/keyrings/tailscale.gpg
+curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.noarmor.gpg \
+  | ${SUDO} tee /etc/apt/keyrings/tailscale.gpg >/dev/null
+
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_24.x nodistro main" \
+  | ${SUDO} tee /etc/apt/sources.list.d/nodesource.list >/dev/null
+
+echo "deb [signed-by=/etc/apt/keyrings/tailscale.gpg] https://pkgs.tailscale.com/stable/debian bookworm main" \
+  | ${SUDO} tee /etc/apt/sources.list.d/tailscale.list >/dev/null
+
+${SUDO} apt-get update
+${SUDO} apt-get install -y nodejs tailscale
+
+# The sandbox image may already have an older, manually-installed Node toolchain
+# in /usr/local/bin. That directory intentionally takes precedence over
+# apt-managed /usr/bin, so remove the stale local commands and let the
+# NodeSource Debian package provide the active versions.
+${SUDO} rm -f \
+  /usr/local/bin/node \
+  /usr/local/bin/npm \
+  /usr/local/bin/npx \
+  /usr/local/bin/corepack \
+  /usr/local/bin/pnpm \
+  /usr/local/bin/pnpx
+
+export PATH="/usr/bin:/bin:${PATH}"
+
+${SUDO} env PATH="${PATH}" npm install --global pnpm@latest
+
+node_version="$(node --version)"
+if [[ "${node_version}" != v24.* ]]; then
+  echo "Expected Node.js 24.x, got ${node_version}" >&2
+  exit 1
+fi
+
+echo "Installed Node.js ${node_version}"
+echo "Installed pnpm $(pnpm --version)"
+echo "Installed Tailscale $(tailscale version | head -n 1)"
