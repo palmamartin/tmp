@@ -11,18 +11,23 @@ Also use this skill whenever an implementation, review, or QA task needs a live 
 
 ## Workflow
 
-1. Prefer the bundled helper:
+1. Prefer the bundled helper. Run it from the app directory that contains `package.json` (this may be a subfolder of the repository).
+
+   If you are the Amp coding agent, run the helper with `--amp` so it publishes preview metadata:
 
    ```sh
-   .agents/skills/dev-server/scripts/ensure-dev-server.sh
+   "$(git rev-parse --show-toplevel)/.agents/skills/dev-server/scripts/ensure-dev-server.sh" --amp
    ```
 
+   For manual local-only use, omit `--amp`.
+
    The helper is intended to:
+   - detect the current app's package manager from `package.json` or lockfiles in the app directory or workspace root,
    - install dependencies if needed,
    - start the dev server in the background,
    - wait until it responds locally,
-   - write logs and PID files under `.amp/`, and
-   - write preview metadata to `.amp/preview.json` when Tailscale preview support is available.
+   - write logs and PID files under the app directory's `.amp/`, and
+   - when run with `--amp`, write preview metadata to the repo root `.amp/preview.json` when Tailscale preview support is available.
 
 2. If the helper fails, read the error before retrying. Common checks:
    - Inspect the project package scripts, for example `cat package.json` or the relevant app's `package.json`.
@@ -39,6 +44,7 @@ Also use this skill whenever an implementation, review, or QA task needs a live 
 ## Environment
 
 - `HTTP_PROXY_PORT` may be set to choose the localhost port. If unset, use the helper default.
+- `--amp` enables Amp-specific preview publishing. Omit it for manual local-only use.
 - Keep generated runtime files in `.amp/`; do not commit logs, PID files, or other transient output.
 
 ## Troubleshooting
